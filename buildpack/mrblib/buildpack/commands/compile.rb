@@ -29,6 +29,9 @@ module Buildpack
           @env["EMBER_ENV"] ||= "production"
           @env["EMBER_DEPLOY_TARGET"] ||= "production"
 
+          ignore_deploy = (@env["EMBER_IGNORE_DEPLOY"] ||= "").downcase
+          ignore_deploy = ignore_deploy == 'true' || ignore_deploy === 'yes' || ignore_deploy != 0.0
+
           Bower.new(@output_io, @error_io, @cache).install
 
           unless command_success?("ember version 2> /dev/null")
@@ -37,7 +40,7 @@ module Buildpack
           end
 
           tuple =
-            if dependencies["ember-cli-deploy"]
+            if dependencies["ember-cli-deploy"] && !ignore_deploy
               EmberBuildTuple.new(true, "ember deploy #{Shellwords.escape(@env["EMBER_DEPLOY_TARGET"])}", StaticConfig::DEFAULT_EMBER_CLI_DEPLOY_DIR)
             else
               EmberBuildTuple.new(false, "ember build #{Shellwords.escape(@env["EMBER_ENV"])}", StaticConfig::DEFAULT_EMBER_CLI_DIR)
